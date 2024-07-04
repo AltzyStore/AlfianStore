@@ -582,3 +582,10 @@ footer .credit a {
     font-size: 75%;
   }
 }
+
+.centered-barcode {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+  }
