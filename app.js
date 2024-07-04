@@ -1,4 +1,3 @@
-// form validation
 const checkoutButton = document.querySelector(".checkout-button");
 checkoutButton.disabled = true;
 
@@ -38,31 +37,15 @@ const handleQueue = () => {
   document.getElementById("queueNumber").style.display = "block";
 };
 
-// kirim data ketika checkout di klik
-checkoutButton.addEventListener("click", function (e) {
-  e.preventDefault();
-  const formData = new FormData(form);
-  const data = new URLSearchParams(formData);
-  const objData = Object.fromEntries(data);
-
-  // Mengambil data dari Alpine store
-  const cart = Alpine.store("cart");
-  const items = cart.items.map((item) => ({
-    name: item.name,
-    quantity: item.quantity,
-    total: item.price * item.quantity,
-  }));
-  objData.items = JSON.stringify(items);
-  objData.total = cart.total;
-
-  const message = formatMessage(objData);
-  const whatsappUrl = `https://wa.me/6288291389753?text=${encodeURIComponent(
-    message
-  )}`;
-  window.open(whatsappUrl);
-
-  // Handle queue number display
-  handleQueue();
+// Show/hide DANA barcode based on payment method selection
+document.querySelectorAll('input[name="paymentMethod"]').forEach((input) => {
+  input.addEventListener("change", (event) => {
+    if (event.target.value === "dana") {
+      document.getElementById("danaBarcode").style.display = "block";
+    } else {
+      document.getElementById("danaBarcode").style.display = "none";
+    }
+  });
 });
 
 // Function to format the WhatsApp message
@@ -79,12 +62,7 @@ const formatMessage = (obj) => {
   }
 
   const formattedItems = items
-    .map((item) => {
-      const itemName = item.name;
-      const itemQuantity = item.quantity;
-      const itemTotal = rupiah(item.total);
-      return `${itemName} (${itemQuantity} x ${itemTotal})`;
-    })
+    .map((item) => `${item.name} (${item.quantity} x ${rupiah(item.total)})`)
     .join("\n");
 
   const customerName = obj.name;
@@ -112,6 +90,39 @@ const rupiah = (number) => {
     currency: "IDR",
   }).format(number);
 };
+
+// Handle checkout button click
+checkoutButton.addEventListener("click", function (e) {
+  e.preventDefault();
+
+  const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+
+  if (selectedPaymentMethod === "whatsapp") {
+    const formData = new FormData(form);
+    const data = new URLSearchParams(formData);
+    const objData = Object.fromEntries(data);
+
+    // Mengambil data dari Alpine store
+    const cart = Alpine.store("cart");
+    const items = cart.items.map((item) => ({
+      name: item.name,
+      quantity: item.quantity,
+      total: item.price * item.quantity,
+    }));
+    objData.items = JSON.stringify(items);
+    objData.total = cart.total;
+
+    const message = formatMessage(objData);
+    const whatsappUrl = `https://wa.me/6288291389753?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl);
+
+    // Handle queue number display
+    handleQueue();
+  } else if (selectedPaymentMethod === "dana") {
+    alert("Silakan scan kode QR DANA untuk melakukan pembayaran.");
+    handleQueue();
+  }
+});
 
 document.addEventListener("alpine:init", () => {
   Alpine.data("menu", () => ({
